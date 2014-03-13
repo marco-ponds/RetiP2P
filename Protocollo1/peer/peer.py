@@ -73,6 +73,7 @@ class PeerClient(object):
 
  		message_type = self.connection_socket.recv(4)
  		session_id = self.connection_socket.recv(16)
+
  		print("TYPE " + message_type)
  		print("SESSION ID "+session_id)
 
@@ -97,4 +98,5 @@ def receivedLogin( sessionId ):
 print("STAR PEER")
 p = PeerClient("fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e" , "fd00:0000:0000:0000:22c9:d0ff:fe47:70a3","3000")
 print("SEND LOGIN")
+print("ciao")
 p.login()
