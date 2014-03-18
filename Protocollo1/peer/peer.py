@@ -1,6 +1,8 @@
 import socket
 import random
 import threading
+import hashlib
+import glob
 
 from Tkinter import *
 
@@ -56,15 +58,48 @@ class BackgroundService(threading.Thread):
 
 	def __init__ (self, owner):
 		threading.Thread.__init__(self)
+		self.owner = owner
 		self.canRun = True
 
 	def stop(self):
 		self.canRun = False	
 
 	def run(self):
-		
+		self.owner._print(glob.glob("data/*.*"))
+		self.retrieveFiles()
 		while self.canRun:
-			return
+			self.checkFiles()
+		return		
+
+	def retrieveFiles(self):
+
+		context["files"] = glob.glob("data/*.*")
+
+	def checkFiles(self):
+
+		if context['files']:
+			temp = glob.glob("data/*.*")
+			to_remove = list(set(context['files']) - set(temp))
+			to_add = list(set(temp) - set(context['files']))
+			if len(to_remove) > 0 :
+				for f in to_remove:
+					filename_rem = f.split("data/")[1]
+					md5_rem = self.owner._calcMD5(filename_rem)
+					self.owner._print("REMOVE " + filename_rem)
+					##self.owner.removeFile(filename_rem,md5_rem)
+
+			if len(to_add) > 0  :
+				for f in to_add:
+					filename_add = f.split("data/")[1]
+					md5_add = self.owner._calcMD5(filename_add)
+					self.owner._print("ADD " + filename_add)
+					##self.owner.addFile(filename_add,md5_add)
+
+			context["files"] = temp
+
+
+		else:
+			context["files"] = glob.glob("data/*.*")
 				
 
 class PeerClient(object):
@@ -119,7 +154,7 @@ class PeerClient(object):
 		self.loginButton.pack(side=LEFT)
 
 		self.logoutButton = Button(self.frame, text="logout", command=self.logout)
-		self.loginButton.pack(side=LEFT)
+		self.logoutButton.pack(side=LEFT)
 
 		self.exitButton = Button(self.frame, text="exit", command=self.quit)
 		self.exitButton.pack(side=LEFT)
@@ -131,8 +166,22 @@ class PeerClient(object):
 		if self.console:
 			self.console.insert(END, "\n"+str(message))
 
+	def _calcMD5(self, filename):
+		m = hashlib.md5()
+		readFile = open(str("data/"+filename) , "r")
+		text = readFile.readline()
+		while text:
+			m.update(text)
+			text = readFile.readline()
+
+		digest = m.hexdigest()
+		self._print(digest);
+		return digest
+
+
 	def quit(self):
 		##effettuo il logout
+		##self.logout()
 		self.peer_server.stopServer()
 		self.background_service.stop();
 		self._print(self.peer_server.isAlive())
@@ -152,13 +201,47 @@ class PeerClient(object):
 		receivedLogin( session_id )
 		self.connection_socket.close()
 
+		##adding all files
+		files = glob.glob("data/*.*")
+		for f in files:
+			filename = f.split("data/")[1]
+			md5 = self._calcMD5(filename)
+			self.addFile(filename,md5)
+
 	def logout(self):
 		if (context['sessionid']):
 			self.connection_socket = socket.socket(socket.AF_INET6 , socket.SOCK_STREAM)
-			self.connectio_socket.connect(self.directory)
+			self.connection_socket.connect(self.directory)
 			##mandiamo messsaggio di logout
 			message = "LOGO"+str(context['sessionid'])
-			self._print()
+			self._print("SENDING LOGOUT " + message)
+			self.connection_socket.send(message)
+
+			message_type = self.connection_socket.recv(4)
+			file_deleted = self.connection_socket.recv(3)
+			self._print("RECEIVED " + message_type)
+			self._print("REMOVED " + file_deleted + " FILES") 
+
+			self.connection_socket.close()
+
+	def addFile(self, filename, md5):
+		if context["sessionid"]:
+			self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+			self.connection_socket.connect(self.directory)
+			##aggiungiamo un file
+			temp = filename
+			if len(temp) < 100:
+				while len(temp) < 100:
+					temp = temp + " "
+			message = "ADDF"+context["sessionid"]+md5+temp
+			self.connection_socket.send(message)
+
+			message_type = self.connection_socket.recv(4)
+			copy_numbers = self.connection_socket.recv(3)
+
+			self._print("RECEIVED " + message_type)
+			self._print("NUMBER OF COPIES: " + copy_numbers)
+
 
 
 
@@ -185,7 +268,7 @@ def receivedLogin( sessionId ):
 
 
 root  = Tk()
-p = PeerClient(root,"fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e" , "fd00:0000:0000:0000:c864:f17c:bb5e:e4d1","3000")
+p = PeerClient(root,"fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e" , "fd00:0000:0000:0000:22c9:d0ff:fe47:70a3","3000")
 root.mainloop()
 
 
