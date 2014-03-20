@@ -232,7 +232,7 @@ class PeerClient(object):
 			m.update(text)
 			text = readFile.readline()
 
-		digest = m.hexdigest()
+		digest = m.digest()
 		return digest
 
 
@@ -294,6 +294,7 @@ class PeerClient(object):
 				while len(temp) < 100:
 					temp = temp + " "
 			message = "ADDF"+context["sessionid"]+md5+temp
+			self._print(message)
 			self.connection_socket.send(message)
 
 			message_type = self.connection_socket.recv(4)
