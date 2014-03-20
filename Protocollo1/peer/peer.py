@@ -3,6 +3,7 @@ import random
 import threading
 import hashlib
 import glob
+import time
 
 from Tkinter import *
 
@@ -19,14 +20,14 @@ class PeerServer(threading.Thread):
 		self.owner = owner
 
 		self.setDaemon(True)
-		self.owner._print("PEER ADDRESS "+ self.address + ":" + str(self.port))
+		self.owner._print("PEER ADDRESS "+ self.address + ":" + str(self.port), "SUC")
 
 	def startServer ( self ):
 		##launching peer server
 		pass
 
 	def stopServer(self):
-		self.owner._print("CLOSING THREAD")
+		self.owner._print("CLOSING THREAD", "LOG")
 		self.canRun = False
 		##trying to connect to my own port
 		socket.socket(socket.AF_INET6, socket.SOCK_STREAM).connect((self.address, self.port))
@@ -44,14 +45,14 @@ class PeerServer(threading.Thread):
 					socketclient, address = self.socket.accept()
 					msg_type = socketclient.recv(4)
 					if msg_type:
-						self.owner._print("MSG TYPE " + msg_type)
+						self.owner._print("MSG TYPE " + msg_type, "SUC")
 					else:
-						self.owner._print("closing socket connection")
+						self.owner._print("closing socket connection","SUC")
 				except:
-					self.owner._print("exception inside our server")
+					self.owner._print("exception inside our server","SUC")
 					return
 		except:
-			self.owner._print("something wrong in our peer server. sorry")
+			self.owner._print("something wrong in our peer server. sorry","ERR")
 			return
 
 class BackgroundService(threading.Thread):
@@ -60,46 +61,67 @@ class BackgroundService(threading.Thread):
 		threading.Thread.__init__(self)
 		self.owner = owner
 		self.canRun = True
+		self.setDaemon(True)
 
 	def stop(self):
 		self.canRun = False	
 
 	def run(self):
-		self.owner._print(glob.glob("data/*.*"))
+		self.owner._print(glob.glob("shared/*.*"), "SUC")
 		self.retrieveFiles()
 		while self.canRun:
+			time.sleep(1)
 			self.checkFiles()
 		return		
 
 	def retrieveFiles(self):
 
-		context["files"] = glob.glob("data/*.*")
+		context["files"] = glob.glob("shared/*.*")
 
 	def checkFiles(self):
 
 		if context['files']:
-			temp = glob.glob("data/*.*")
+			temp = glob.glob("shared/*.*")
 			to_remove = list(set(context['files']) - set(temp))
 			to_add = list(set(temp) - set(context['files']))
 			if len(to_remove) > 0 :
 				for f in to_remove:
-					filename_rem = f.split("data/")[1]
-					md5_rem = self.owner._calcMD5(filename_rem)
-					self.owner._print("REMOVE " + filename_rem)
-					##self.owner.removeFile(filename_rem,md5_rem)
+					filename_rem = f.split("shared/")[1]
+					md5_rem = context["md5_files"][filename_rem]
+					self.owner._print("REMOVED " + filename_rem + " WITH MD5 " + md5_rem, "SUC")
+					self.owner.removeFile(filename_rem,md5_rem)
 
 			if len(to_add) > 0  :
 				for f in to_add:
-					filename_add = f.split("data/")[1]
+					filename_add = f.split("shared/")[1]
 					md5_add = self.owner._calcMD5(filename_add)
-					self.owner._print("ADD " + filename_add)
-					##self.owner.addFile(filename_add,md5_add)
+					self.owner._print("ADDED " + filename_add + " WITH MD5 " + md5_add, "SUC")
+					self.owner.addFile(filename_add,md5_add)
 
 			context["files"] = temp
+			self.storeMD5Files()
+
+			self.printFilesToList()
 
 
 		else:
-			context["files"] = glob.glob("data/*.*")
+			context["files"] = glob.glob("shared/*.*")
+
+	def storeMD5Files(self):
+
+		file_list = glob.glob("shared/*.*")
+		context['md5_files'] = dict()
+		for f in file_list:
+			filename = f.split("shared/")[1]
+			md5 = self.owner._calcMD5(filename)
+			context['md5_files'][str(filename)] = md5
+
+	def printFilesToList(self):
+		file_list = glob.glob("shared/*.*")
+		self.owner.fileList.delete(0, END)
+		for f in file_list:
+			filename = f.split("shared/")[1]
+			self.owner.fileList.insert(END, filename)
 				
 
 class PeerClient(object):
@@ -134,6 +156,8 @@ class PeerClient(object):
 				print("indirizzo non corretto")	
 				return
 
+			self.login()
+
 			self.peer_server = PeerServer(self.ip_p2p , self.port , self)
 			self.peer_server.start()
 
@@ -151,31 +175,64 @@ class PeerClient(object):
 		self.frame.pack()
 
 		self.loginButton = Button(self.frame, text="login" , command=self.login)
-		self.loginButton.pack(side=LEFT)
+		##self.loginButton.pack(side=LEFT)
+		self.loginButton.grid(row=0, column=0)
 
 		self.logoutButton = Button(self.frame, text="logout", command=self.logout)
-		self.logoutButton.pack(side=LEFT)
+		##self.logoutButton.pack(side=LEFT)
+		self.logoutButton.grid(row=0, column=1)
 
 		self.exitButton = Button(self.frame, text="exit", command=self.quit)
-		self.exitButton.pack(side=LEFT)
+		##self.exitButton.pack(side=LEFT)
+		self.exitButton.grid(row=0, column=2)
 
-		self.console = Text(self.frame, width=50, height=30)
-		self.console.pack()
+			
 
-	def _print(self, message):
-		if self.console:
-			self.console.insert(END, "\n"+str(message))
+		self.search = Text(self.frame, width=100, height=1, background="yellow")	
+		self.search.grid(row=0, column=3, columnspan=15)
+
+		self.searchButton = Button(self.frame, text="search", command=self.search)
+		self.searchButton.grid(row=0, column=19)
+
+		self.fileList = Listbox(self.frame, height=30)
+		self.fileList.grid(row=1, column=0, columnspan=3, sticky=N+W+E, padx=10, pady=10)
+
+		
+		def onselect(evt):
+		    # Note here that Tkinter passes an event object to onselect()
+		    w = evt.widget
+		    index = int(w.curselection()[0])
+		    value = w.get(index)
+		    self._print ('You selected item %d: "%s"' % (index, value))
+
+		self.fileList.bind('<<ListboxSelect>>', onselect)
+
+
+		self.console = Text(self.frame, width=100, height=30)
+		##self.console.pack(side=RIGHT)
+		self.console.grid(row=1, column=3, columnspan=16)
+
+		self.console.tag_add("LOG", "1.0", "1.4")
+		self.console.tag_add("ERR", "1.8", "1.13")
+		self.console.tag_add("SUC", "1.0", "1.4")
+		self.console.tag_config("LOG", foreground="blue")
+		self.console.tag_config("ERR", foreground="RED")
+		self.console.tag_config("SUC", foreground="green")
+
+
+	def _print(self, message , messagetype="LOG"):
+		if self.console:			
+			self.console.insert(END, "\n"+str(message) , str(messagetype))
 
 	def _calcMD5(self, filename):
 		m = hashlib.md5()
-		readFile = open(str("data/"+filename) , "r")
+		readFile = open(str("shared/"+filename) , "r")
 		text = readFile.readline()
 		while text:
 			m.update(text)
 			text = readFile.readline()
 
 		digest = m.hexdigest()
-		self._print(digest);
 		return digest
 
 
@@ -202,11 +259,14 @@ class PeerClient(object):
 		self.connection_socket.close()
 
 		##adding all files
-		files = glob.glob("data/*.*")
+		files = glob.glob("shared/*.*")
 		for f in files:
-			filename = f.split("data/")[1]
+			filename = f.split("shared/")[1]
 			md5 = self._calcMD5(filename)
 			self.addFile(filename,md5)
+
+
+
 
 	def logout(self):
 		if (context['sessionid']):
@@ -242,6 +302,40 @@ class PeerClient(object):
 			self._print("RECEIVED " + message_type)
 			self._print("NUMBER OF COPIES: " + copy_numbers)
 
+	def removeFile(self, filename, md5):
+
+		if context["sessionid"]:
+			self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+			self.connection_socket.connect(self.directory)
+			##aggiungiamo un file
+		
+			message = "DELF"+context["sessionid"]+md5
+			self.connection_socket.send(message)
+
+			message_type = self.connection_socket.recv(4)
+			copy_numbers = self.connection_socket.recv(3)
+
+			self._print("RECEIVED " + message_type)
+			self._print("NUMBER OF COPIES: " + copy_numbers)
+
+	def search(self, searchString):
+		if context["sessionid"]:
+			self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+			self.connection_socket.connect(self.directory)
+			##cerchiamo un file
+			temp = searchString
+			if len(temp) < 20:
+				while len(temp) < 20:
+					temp = temp + " "
+			elif len(temp) > 20:
+				temp = temp[0:20]
+
+			message = "FIND"+context["sessionid"]+temp
+			self.connection_socket.send(message)
+
+			message_type = self.connection_socket.recv(4)
+			num = int(self.connection_socket.recv(3))
+
 
 
 
@@ -260,6 +354,7 @@ def receivedLogin( sessionId ):
 ## fd00:0000:0000:0000:c864:f17c:bb5e:e4d1 giulio
 ## fd00:0000:0000:0000:7481:4a85:5d87:9a52 altri
 ## fd00:0000:0000:0000:22c9:d0ff:fe47:70a3
+## fd00:0000:0000:0000:c646:19ff:fe69:b7a5
 ##print("STAR PEER")
 ##p = PeerClient("fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e" , "fd00:0000:0000:0000:22c9:d0ff:fe47:70a3","3000")
 ##print("SEND LOGIN")
@@ -267,9 +362,12 @@ def receivedLogin( sessionId ):
 ##p.login()
 
 
-root  = Tk()
-p = PeerClient(root,"fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e" , "fd00:0000:0000:0000:22c9:d0ff:fe47:70a3","3000")
-root.mainloop()
+def main():
+	root  = Tk()
+	p = PeerClient(root,"fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e" , "fd00:0000:0000:0000:c864:f17c:bb5e:e4d1","3000")
+	root.mainloop()
 
+if __name__ == '__main__':
+    main() 
 
 
