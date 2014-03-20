@@ -191,7 +191,7 @@ class PeerClient(object):
 		self.search = Text(self.frame, width=100, height=1, background="yellow")	
 		self.search.grid(row=0, column=3, columnspan=15)
 
-		self.searchButton = Button(self.frame, text="search", command=self.search)
+		self.searchButton = Button(self.frame, text="search", command=self.searchFile)
 		self.searchButton.grid(row=0, column=19)
 
 		self.fileList = Listbox(self.frame, height=30)
@@ -318,24 +318,35 @@ class PeerClient(object):
 			self._print("RECEIVED " + message_type)
 			self._print("NUMBER OF COPIES: " + copy_numbers)
 
-	def search(self, searchString):
-		if context["sessionid"]:
-			self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-			self.connection_socket.connect(self.directory)
-			##cerchiamo un file
-			temp = searchString
-			if len(temp) < 20:
-				while len(temp) < 20:
-					temp = temp + " "
-			elif len(temp) > 20:
-				temp = temp[0:20]
+	def searchFile(self):
 
-			message = "FIND"+context["sessionid"]+temp
-			self.connection_socket.send(message)
+		searchString = self.search.get("1.0", END)[0:-1]
+		if not len(searchString) == 0:
+			
+			if context["sessionid"]:
+				self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+				self.connection_socket.connect(self.directory)
+				##cerchiamo un file
+				temp = searchString
+				if len(temp) < 20:
+					while len(temp) < 20:
+						temp = temp + " "
+				elif len(temp) > 20:
+					temp = temp[0:20]
 
-			message_type = self.connection_socket.recv(4)
-			num = int(self.connection_socket.recv(3))
+				message = "FIND"+context["sessionid"]+temp
+				self.connection_socket.send(message)
 
+				message_type = self.connection_socket.recv(4)
+				num = int(self.connection_socket.recv(3))
+				for f in range(num):
+					self._print(self.connection_socket.recv(16))
+					self._print(self.connection_socket.recv(100))
+					copie = int(self.connection_socket.recv(3))
+					for c in range(copie):
+						self._print("\t"+self.connection_socket.recv(39))
+						self._print("\t"+self.connection_socket.recv(5))
+				
 
 
 
