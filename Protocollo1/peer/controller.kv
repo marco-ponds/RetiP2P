@@ -1,0 +1,80 @@
+#:kivy 1.0
+#:import lv kivy.uix.listview
+#:import la kivy.adapters.listadapter
+#:import im kivy.uix.image
+
+<Controller>:
+
+    searchBox: search_box
+    fileList: file_list
+    console: console_log
+    fileImage: file_image
+
+    GridLayout:
+        rows: 3
+        padding: 0
+
+        GridLayout:
+            cols: 5
+            padding: 0
+            size_hint_y: 0.1
+
+
+            Button:
+                text: "login"
+                on_press: root.peer.login()
+                height: 5
+                size_hint_x: .6
+
+            Button:
+                text: "logout"
+                on_press: root.peer.logout()
+                size_hint_x: .6
+
+            Button:
+                text: "exit"
+                on_press: root.exit()
+                size_hint_x: .6
+
+            TextInput:
+                id: search_box
+                hint_text: "Esegui una ricerca"
+                size_hint_x: 3
+
+            Button:
+                text: "cerca"
+                on_press: root.peer.searchFile()
+                size_hint_x: .6
+
+        GridLayout:
+            cols: 2
+            orientation: "vertical"
+            padding: 0
+
+            ListView:
+                id: file_list
+                size_hint: .5,1                    
+
+            Label:
+                id: console_log
+                text: 'Left aligned at middle'
+                padding: 10, 10
+                halign: 'left'
+                valign: 'top'
+                text_size: self.size
+
+        GridLayout:
+            cols: 2
+            orientation: "vertical"
+            padding: 0
+
+            Scatter:
+                id: file_image
+                padding: 10, 10
+                
+
+            Label:
+                text: 'Left aligned at middle'
+                padding: 10, 10
+                halign: 'left'
+                valign: 'top'
