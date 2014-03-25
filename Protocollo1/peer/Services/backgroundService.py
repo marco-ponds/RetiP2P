@@ -40,14 +40,14 @@ class BackgroundService(threading.Thread):
 					filename_rem = f.split("shared/")[1]
 					md5_rem = self.app.context["md5_files"][filename_rem]
 					self.interface.log("REMOVED " + filename_rem + " WITH MD5 " + md5_rem, "SUC")
-					##self.peer.removeFile(filename_rem,md5_rem)
+					self.peer.removeFile(filename_rem,md5_rem)
 
 			if len(to_add) > 0  :
 				for f in to_add:
 					filename_add = f.split("shared/")[1]
 					md5_add = self.app.calcMD5(filename_add)
 					self.interface.log("ADDED " + filename_add + " WITH MD5 " + md5_add, "SUC")
-					##self.peer.addFile(filename_add,md5_add)
+					self.peer.addFile(filename_add,md5_add)
 
 			self.app.context["files"] = temp
 			self.storeMD5Files()
@@ -64,10 +64,12 @@ class BackgroundService(threading.Thread):
 
 		file_list = glob.glob("shared/*.*")
 		self.app.context['md5_files'] = dict()
+		self.app.context['files_md5'] = dict()
 		for f in file_list:
 			filename = f.split("shared/")[1]
 			md5 = self.app.calcMD5(filename)
 			self.app.context['md5_files'][str(filename)] = md5
+			self.app.context['files_md5'][str(md5)] = filename
 
 	def printFilesToList(self):
 		file_list = glob.glob("shared/*.*")

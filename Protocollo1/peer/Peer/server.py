@@ -1,5 +1,34 @@
 import threading
 import socket
+##import os
+
+class PeerToPeer(threading.Thread):
+
+	def __init__(self, md5, app, socket):
+
+		threading.Thread.__init__(self)
+		self.app = app
+		self.md5 = md5
+		self.socket = socket
+
+	def run(self):
+		filename = self.app.context["files_md5"][str(self.md5)]
+		readFile = open(str("shared/"+filename) , "rb")
+		##size = os.path.getsize("shared/"+filename)
+		index = 0
+		data = readFile.read(1024)
+		message = "ARET"
+		messagetemp = ""
+		while data:
+			index += 1
+			messagetemp = messagetemp +"0"+str(len(data)) + str(data)
+		## ha terminato di leggere il file
+		message = message + str(index) + messagetemp
+		self.socket.send(message)
+		self.socket.close()
+		return
+
+
 
 class PeerServer(threading.Thread):
 
@@ -37,12 +66,10 @@ class PeerServer(threading.Thread):
 				try:
 					socketclient, address = self.socket.accept()
 					msg_type = socketclient.recv(4)
-					if msg_type:
-						pass
-						##self.interface.log("MSG TYPE " + msg_type, "SUC")
-					else:
-						pass
-						##self.interface.log("closing socket connection","SUC")
+					if msg_type == "RETR":
+						md5 = socketclient.recv(16)
+						PeerToPeer(md5, self.app, socketclient).start()
+						
 				except:
 					##self.interface.log("exception inside our server","SUC")
 					return

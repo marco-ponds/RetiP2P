@@ -23,6 +23,7 @@ import time
 ## fd00:0000:0000:0000:7481:4a85:5d87:9a52 altri
 ## fd00:0000:0000:0000:22c9:d0ff:fe47:70a3
 ## fd00:0000:0000:0000:c646:19ff:fe69:b7a5
+## fd00:0000:0000:0000:acdf:bd40:555a:59e4
 
 class Controller(FloatLayout):
 
@@ -33,16 +34,21 @@ class Controller(FloatLayout):
 
 		self.context = dict()
 		self.context['file_names'] = list()
+		self.context["peers_addr"] = list()
 		self.adapter = la.ListAdapter(data=self.context['file_names'],selection_mode='single',allow_empty_selection=False,cls=lv.ListItemButton)
+		self.peerAdapter = la.ListAdapter(data=self.context['peers_addr'],selection_mode='single',allow_empty_selection=False,cls=lv.ListItemButton)
 
 		self.peer = PeerClient()  
-		self.peer.set(self, "fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","fd00:0000:0000:0000:c864:f17c:bb5e:e4d1","3000")
+		self.peer.set(self, "fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","fd00:0000:0000:0000:acdf:bd40:555a:59e4","3000")
       
 		self.peerServer = PeerServer(self)
 		self.background = BackgroundService( self )
 
 		self.adapter.bind(on_selection_change=self.selectedItem)
 		self.fileList.adapter = self.adapter
+
+		self.peerAdapter.bind(on_selection_change=self.peer.downloadFile)
+		self.peerList.adapter = self.peerAdapter
 
 		self.background.start()
 		self.peerServer.start()
@@ -70,6 +76,10 @@ class Controller(FloatLayout):
 
 		digest = m.digest()
 		return digest
+
+	def receivedLogin( self, sessionId ):
+		self.context['sessionid'] = sessionId
+		self.log(sessionId)
 
 class ControllerApp(App):
 

@@ -2,6 +2,7 @@ import sys
 import socket
 import time
 import random
+import glob
 
 class PeerClient(object):
 
@@ -67,7 +68,7 @@ class PeerClient(object):
  		session_id = self.connection_socket.recv(16)
  		self.interface.log("TYPE " + message_type)
  		self.interface.log("SESSION ID "+session_id)
-		receivedLogin( session_id )
+		self.app.receivedLogin( session_id )
 		self.connection_socket.close()
 
 		##adding all files
@@ -139,9 +140,11 @@ class PeerClient(object):
 	def searchFile(self):
 
 		searchString = self.interface.searchBox.text ##.get("1.0", END)[0:-1]
+		print("INSIDE SEARCH " + searchString)
 		if not len(searchString) == 0:
 			
 			if self.app.context["sessionid"]:
+				print("about to send connection")
 				self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 				self.connection_socket.connect(self.directory)
 				##cerchiamo un file
@@ -154,20 +157,93 @@ class PeerClient(object):
 
 				message = "FIND"+self.app.context["sessionid"]+temp
 				self.connection_socket.send(message)
+				print("messaggio mandato")
+				self.app.context["peers_addr"] = list()
+				self.app.context["downloads_available"] = dict()
 
 				message_type = self.connection_socket.recv(4)
 				num = int(self.connection_socket.recv(3))
+
+				print("messaggio ricevuto")
 				if num != 0:
+					print("abbiamo dei file")
+					print("NUM " + str(num))
+					i = 0
 					for f in range(num):
-						self.interface.log(self.connection_socket.recv(16))
-						self.interface.log(self.connection_socket.recv(100))
+						print("stampiamo file")
+						print("INSIDE FOR "+ str(i))
+						file_md5 = self.connection_socket.recv(16)
+						nome = self.connection_socket.recv(100)
 						copie = int(self.connection_socket.recv(3))
+						s = str(nome) + "\t #copie" + str(copie)
+						print(str(file_md5) + " - " + str(nome) + " - " + str(copie) )
+						self.interface.log(s + " " + str(file_md5))
+						self.app.context["peers_addr"].append(s)
+						i += 1
 						for c in range(copie):
-							self.interface.log("\t"+self.connection_socket.recv(39))
-							self.interface.log("\t"+self.connection_socket.recv(5))
+							print("stampiamo i peer")
+							ip = self.connection_socket.recv(39)
+							port = int(self.connection_socket.recv(5))
+							print("peer " + str(ip) + " - " + str(port) )
+							self.interface.log("\t" + str(ip) + " " + str(port))
+							self.app.context["peers_addr"].append(str(ip))
+							key = str(i)+"_"+str(ip) 
+							self.app.context["downloads_available"][str(key)] = dict()
+							self.app.context["downloads_available"][str(key)]["porta"] = port
+							self.app.context["downloads_available"][str(key)]["nome"] = nome.strip(" ")
+							self.app.context["downloads_available"][str(key)]["md5"] = file_md5
+							self.app.context["downloads_available"][str(key)]["numcopie"] = copie
+							i += 1
+
+					self.isready = False
+					print("ALREADY SET self.isready " + str(self.isready))
+					self.interface.peerList.adapter.data = self.app.context["peers_addr"]
+					self.interface.peerList.populate()
+					self.connection_socket.close()
+
 				else:
+					print("sono appena fallito")
+					self.interface.peerList.adapter.data = list()
+					self.interface.peerList.populate()
+					self.connection_socket.close()
 					self.interface.log("NON HO TROVATO NESSUN FILE." , "ERR")
+		else:
+			print("INSIDE SEARCH errore")
 				
+	def downloadFile(self, listadapter, *args):
+		try:
+			self.interface.log("ABOUT TO DOWNLOAD FROM " + listadapter.selection[0].text)
+			s = listadapter.selection[0].text
+			i = self.app.context["peers_addr"].index(s)
+			print("INSIDE DOWNLOAD ")
+			key = str(i)+"_"+str(s)
+			if(self.app.context["downloads_available"][str(key)]):
+				peer = self.app.context["downloads_available"][str(key)]
+				##possiamo far partire il download del file
+				destination = (s , int(peer["porta"]))
+				self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+				self.connection_socket.connect(destination)
+				message = "RETR"+str(peer["md5"])
+				self.connection_socket.send(message)
+				message_type = self.connection_socket.recv(4)
+				num_chunks = self.connection_socket.recv(6)
+				f = open('shared/'+peer["nome"].strip(" "), "wb")
+				if int(num_chunks) > 0 :
+					self.interface.progress.max = int(num_chunks)
+					for i in range(int(num_chunks)):
+						len_chunk = self.connection_socket.recv(5)
+						if (len_chunk > 0):
+							self.interface.progress.value = self.interface.progress.value + 1
+							chunk = sel.connection_socket.recv(int(len_chunk))
+							f.write(chunk)
+					f.close()
+
+				self.connection_socket.close()
+		except:
+			print("exception!!")
+
+
+
 
 
 
