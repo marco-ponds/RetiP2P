@@ -24,7 +24,7 @@ import time
 ## fd00:0000:0000:0000:22c9:d0ff:fe47:70a3
 ## fd00:0000:0000:0000:c646:19ff:fe69:b7a5
 ## fd00:0000:0000:0000:acdf:bd40:555a:59e4
-
+## fd00:0000:0000:0000:9afe:94ff:fe3f:b0f2
 class Controller(FloatLayout):
 
 	file_source = StringProperty(None)
@@ -39,7 +39,7 @@ class Controller(FloatLayout):
 		self.peerAdapter = la.ListAdapter(data=self.context['peers_addr'],selection_mode='single',allow_empty_selection=False,cls=lv.ListItemButton)
 
 		self.peer = PeerClient()  
-		self.peer.set(self, "fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","fd00:0000:0000:0000:acdf:bd40:555a:59e4","3000")
+		self.peer.set(self, "fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","3006")
       
 		self.peerServer = PeerServer(self)
 		self.background = BackgroundService( self )
@@ -85,52 +85,6 @@ class ControllerApp(App):
 
 	def build(self):
 		return Controller()
-
-
-class application(object):
-
-	def __init__(self):
-
-		print("inside main init")
-		self.context = dict()
-		self.context['file_names'] = []
-		self.peer = PeerClient()
-		##self.interface = GraphicInterface(self , self.peer)
-		self.interface = ControllerApp()
-		self.interface.set(self.context , self.peer)
-		print(self.interface.c)
-		self.peer.set(self , self.interface.c, "fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e" , "fd00:0000:0000:0000:c864:f17c:bb5e:e4d1","3000")
-
-		self.peerServer = PeerServer( self , self.peer )
-		self.background = BackgroundService( self , self.peer, self.interface.c)
-
-
-	def stop(self):
-		self.background.stop()
-		self.peerServer.stop()
-		self.interface.stop()
-		pass
-
-	def start(self):
-		self.background.start()
-		self.peerServer.start()
-		self.interface.run()
-		pass
-
-	def calcMD5(self, filename):
-		m = hashlib.md5()
-		readFile = open(str("shared/"+filename) , "r")
-		text = readFile.readline()
-		while text:
-			m.update(text)
-			text = readFile.readline()
-
-		digest = m.digest()
-		return digest
-
-	def receivedLogin( self, sessionId ):
-		self.context['sessionid'] = sessionId
-		self.interface.c.log(sessionId)
 
 if __name__ == '__main__':
 	ControllerApp().run()

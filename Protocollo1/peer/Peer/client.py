@@ -219,8 +219,11 @@ class PeerClient(object):
 			key = str(i)+"_"+str(s)
 			if(self.app.context["downloads_available"][str(key)]):
 				peer = self.app.context["downloads_available"][str(key)]
+				print(peer)
 				##possiamo far partire il download del file
 				destination = (s , int(peer["porta"]))
+				print(destination)
+				print(peer["md5"])
 				self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 				self.connection_socket.connect(destination)
 				message = "RETR"+str(peer["md5"])
@@ -239,6 +242,20 @@ class PeerClient(object):
 					f.close()
 
 				self.connection_socket.close()
+
+				## scriviamo alla directory che abbiamo finito il download
+				self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+				self.connection_socket.connect(self.directory)
+
+				message = "DREG" + self.app.context["sessionid"] + peer["md5"]
+				self.connection_socket.send(message)
+
+				ack = self.connection_socket.recv(4)
+				n_down = self.connection_socket.recv(5)
+				self.interface.log("RECEIVED "+ str(ack))
+				self.interface.log("#DOWNLOAD " + str(n_down))
+			else:
+				print("NOT AVAILABLE")
 		except:
 			print("exception!!")
 

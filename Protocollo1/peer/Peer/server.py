@@ -13,18 +13,43 @@ class PeerToPeer(threading.Thread):
 
 	def run(self):
 		filename = self.app.context["files_md5"][str(self.md5)]
+		filename = filename.strip(" ")
 		readFile = open(str("shared/"+filename) , "rb")
 		##size = os.path.getsize("shared/"+filename)
 		index = 0
 		data = readFile.read(1024)
 		message = "ARET"
 		messagetemp = ""
+		lunghezze = list()
+		bytes = list()
 		while data:
-			index += 1
-			messagetemp = messagetemp +"0"+str(len(data)) + str(data)
+			##index += 1
+			##messagetemp = messagetemp +"0"+str(len(data)) + str(data)
+			lunghezze.append(str(len(data)))
+			bytes.append(data)
+			data = readFile.read(1024)
 		## ha terminato di leggere il file
-		message = message + str(index) + messagetemp
+		##message = message + str(index) + messagetemp
+		##self.socket.send(message)
 		self.socket.send(message)
+		l = int(len(bytes))
+		if (l <= 6):
+			l_string = ("0" * (5 - l)) + str(l)
+		else:
+			##l_string = str(len(bytes))
+			print("ERRORE NELLA DIMENSIONE DEL FILE")
+			return
+
+		self.socket.send(l_string)
+		for i in range(len(bytes)):
+			if (lunghezze[i] <= 5):
+				l_data = ("0" * (5 - int(lunghezze[i]))) + str(lunghezze[i])
+			else:
+				print("ERRORE NELLA DIMENSIONE DEL CHUNK")
+				return
+
+			self.socket.send(l_data)
+			self.socket.sendall(bytes[i])
 		self.socket.close()
 		return
 
