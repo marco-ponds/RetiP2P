@@ -4,17 +4,16 @@ import socket
 
 class PeerToPeer(threading.Thread):
 
-	def __init__(self, md5, app, socket):
+	def __init__(self, filename, socket):
 
 		threading.Thread.__init__(self)
-		self.app = app
-		self.md5 = md5
+		self.filename = filename
 		self.socket = socket
 
 	def run(self):
-		filename = self.app.context["files_md5"][str(self.md5)]
-		filename = filename.strip(" ")
-		readFile = open(str("shared/"+filename) , "rb")
+		##filename = self.app.context["files_md5"][str(self.md5)]
+		self.filename = self.filename.strip(" ")
+		readFile = open(str("shared/"+self.filename) , "rb")
 		##size = os.path.getsize("shared/"+filename)
 		index = 0
 		data = readFile.read(1024)
@@ -32,24 +31,20 @@ class PeerToPeer(threading.Thread):
 		##message = message + str(index) + messagetemp
 		##self.socket.send(message)
 		self.socket.send(message)
-		l = int(len(bytes))
-		if (l <= 6):
-			l_string = ("0" * (5 - l)) + str(l)
-		else:
-			##l_string = str(len(bytes))
-			print("ERRORE NELLA DIMENSIONE DEL FILE")
-			return
+		l = len(str(int(len(bytes))))
+		
+		l_string = ("0" * (6 - l)) + str(int(len(bytes)))
 
-		self.socket.send(l_string)
+		##self.socket.send(str(l_string).encode('utf-8'))
+		self.socket.send(str(l_string))
+
 		for i in range(len(bytes)):
-			if (lunghezze[i] <= 5):
-				l_data = ("0" * (5 - int(lunghezze[i]))) + str(lunghezze[i])
-			else:
-				print("ERRORE NELLA DIMENSIONE DEL CHUNK")
-				return
+			
+			l_data = ("0" * (5 - len(str(lunghezze[i]))) + str(lunghezze[i]))
 
-			self.socket.send(l_data)
+			self.socket.send(str(l_data).encode('utf-8'))
 			self.socket.sendall(bytes[i])
+
 		self.socket.close()
 		return
 
@@ -93,7 +88,8 @@ class PeerServer(threading.Thread):
 					msg_type = socketclient.recv(4)
 					if msg_type == "RETR":
 						md5 = socketclient.recv(16)
-						PeerToPeer(md5, self.app, socketclient).start()
+						filename = self.app.context["files_md5"][str(md5)]
+						PeerToPeer(filename, socketclient).start()
 						
 				except:
 					##self.interface.log("exception inside our server","SUC")

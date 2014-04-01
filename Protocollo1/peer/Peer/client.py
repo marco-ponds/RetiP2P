@@ -120,6 +120,8 @@ class PeerClient(object):
 
 			self.interface.log("RECEIVED " + message_type)
 			self.interface.log("NUMBER OF COPIES: " + copy_numbers)
+		else:
+			self.interface.log("non hai ancora un sessionid")
 
 	def removeFile(self, filename, md5):
 
@@ -237,11 +239,12 @@ class PeerClient(object):
 						len_chunk = self.connection_socket.recv(5)
 						if (len_chunk > 0):
 							self.interface.progress.value = self.interface.progress.value + 1
-							chunk = sel.connection_socket.recv(int(len_chunk))
+							chunk = self.connection_socket.recv(int(len_chunk))
 							f.write(chunk)
 					f.close()
 
 				self.connection_socket.close()
+				self.interface.progress.value = 0
 
 				## scriviamo alla directory che abbiamo finito il download
 				self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
@@ -254,10 +257,14 @@ class PeerClient(object):
 				n_down = self.connection_socket.recv(5)
 				self.interface.log("RECEIVED "+ str(ack))
 				self.interface.log("#DOWNLOAD " + str(n_down))
+				self.connection_socket.close()
 			else:
 				print("NOT AVAILABLE")
 		except:
 			print("exception!!")
+			print(sys.exc_info()[0])
+			print(sys.exc_info()[1])
+			print(sys.exc_info()[2])
 
 
 

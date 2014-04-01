@@ -18,7 +18,8 @@ if not(os.path.isfile('database')):
 serversocket = mysocket.mysocket()
 
 #si associa il socket ad un host pubblico ed alla porta 3000
-serversocket.bind("fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e", 3006)
+##serversocket.bind("fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e", 3007)
+serversocket.bind("0000:0000:0000:0000:0000:0000:0000:0001" , 3013)
 #serversocket.bind("fd00:0000:0000:0000:9afe:94ff:fe3f:b0f2", 3000)
 
 #metto la socket in ascolto

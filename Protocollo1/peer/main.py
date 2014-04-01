@@ -39,8 +39,9 @@ class Controller(FloatLayout):
 		self.peerAdapter = la.ListAdapter(data=self.context['peers_addr'],selection_mode='single',allow_empty_selection=False,cls=lv.ListItemButton)
 
 		self.peer = PeerClient()  
-		self.peer.set(self, "fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","3006")
-      
+		##self.peer.set(self, "fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","3000")
+		self.peer.set(self, "0000:0000:0000:0000:0000:0000:0000:0001","0000:0000:0000:0000:0000:0000:0000:0001","3013")
+
 		self.peerServer = PeerServer(self)
 		self.background = BackgroundService( self )
 
