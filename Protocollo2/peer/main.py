@@ -1,6 +1,10 @@
-from Peer.client import PeerClient
-from Peer.server import PeerServer
+from Cient.peer import PeerClient
+
+from Server.receiver import Receiver
+from Server.cerca import CercaVicini
+
 from Services.backgroundService import BackgroundService
+from Services.database import Database
 
 import kivy
 kivy.require('1.0.5')
@@ -35,17 +39,19 @@ class Controller(FloatLayout):
 		super(Controller, self).__init__(**kwargs)
 
 		self.context = dict()
+		self.context['peers_index'] = 0
 		self.context['file_names'] = list()
 		self.context["peers_addr"] = list()
 		self.adapter = la.ListAdapter(data=self.context['file_names'],selection_mode='single',allow_empty_selection=False,cls=lv.ListItemButton)
 		self.peerAdapter = la.ListAdapter(data=self.context['peers_addr'],selection_mode='single',allow_empty_selection=False,cls=lv.ListItemButton)
+		##creiamo il database
+		self.db = Database()
 
-		self.peer = PeerClient()  
-		self.peer.set(self, "fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e","fd00:0000:0000:0000:b89a:58cf:3c32:10a6","3000")
-		##self.peer.set(self, "fd00:0000:0000:0000:5626:96ff:fedb:a4ad","fd00:0000:0000:0000:b89a:58cf:3c32:10a6","3000")
+		self.peer = PeerClient(self, None)  
 
-		self.peerServer = PeerServer(self)
+		self.receiver = Receiver(self)
 		self.background = BackgroundService( self )
+		self.cercaVicini = CercaVicini(self)
 
 		self.adapter.bind(on_selection_change=self.selectedItem)
 		self.fileList.adapter = self.adapter
@@ -54,7 +60,7 @@ class Controller(FloatLayout):
 		self.peerList.adapter = self.peerAdapter
 
 		self.background.start()
-		self.peerServer.start()
+		self.receiver.start()
 
 	def log(self, message, messagetype="LOG"):
 

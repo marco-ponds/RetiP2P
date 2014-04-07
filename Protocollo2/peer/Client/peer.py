@@ -3,37 +3,39 @@ import socket
 import time
 import random
 import glob
+import string
+from random import *
 
 class PeerClient(object):
 
-	def __init__(self, app):
+	def __init__(self, app , ip_p2p):
 
 		print("inside peer set")
 		try:
 			self.app = app
 
-			short_ip = socket.getaddrinfo(socket.gethostname(),None, socket.AF_INET6)[0][4][0]
-			short_ip_a = short_ip.split(":")
-			ip = ""
-			for i in short_ip_a:
-				if len(i) == 0:
-					ip = ip + "0000:0000:0000:"
-				else:
-					ip = ip + i + ":"
+			if ip_p2p == None:
 
-			self.ip_p2p = ip
+				short_ip = socket.getaddrinfo(socket.gethostname(),None, socket.AF_INET6)[1][4][0]
+				short_ip_a = short_ip.split(":")
+				last = short_ip_a[-1]
+				ip = ""
+				for i in short_ip_a:
+					if len(i) == 0:
+						ip = ip + "0000:0000:0000:"
+					else:
+						if i == last:
+							ip = ip + i
+						else:
+							ip = ip + i + ":"
+						
+				self.ip_p2p = ip
 
+			else:
+				self.ip_p2p = ip_p2p
 			self.port = str(random.randint(8000,9000))
 			##we obtained a new port between 8000 and 9000
 			print(self.ip_p2p +":"+self.port)
-
-			if ip_dir == "none" and porta_dir == "none":
-				print("non hai inserito l'indirizzo della directory")
-			else: 
-				self.ip_dir = ip_dir
-				self.porta_dir = int(porta_dir)	
-				self.directory = (self.ip_dir , int(self.porta_dir))
-
 			
 			##check if our addresses are in ipv6 format	
 			if not (self.checkIPV6Format(self.ip_p2p)):
@@ -49,76 +51,84 @@ class PeerClient(object):
 			return
 
 	def searchFile(self):
+		try:
+			searchString = self.app.searchBox.text ##.get("1.0", END)[0:-1]
+			print("INSIDE SEARCH " + searchString)
 
-		searchString = self.interface.searchBox.text ##.get("1.0", END)[0:-1]
-		print("INSIDE SEARCH " + searchString)
-		if not len(searchString) == 0:
-			
-			print("about to send connection")
-			self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-			self.connection_socket.connect(self.directory)
-			##cerchiamo un file
-			temp = searchString
-			if len(temp) < 20:
-				while len(temp) < 20:
-					temp = temp + " "
-			elif len(temp) > 20:
-				temp = temp[0:20]
+			chars = string.ascii_letters + string.digits
+			packetID = "".join(choice(chars) for x in range(randint(16, 16)))
+			if not len(searchString) == 0:
+				# prima di una nuova ricerca azzero le liste precedenti
+				self.app.context["peers_addr"] = list()
+				self.app.context["downloads_available"] = dict()
+				self.app.context["peers_index"] = 0
 
-			message = "FIND"+self.app.context["sessionid"]+temp
-			self.connection_socket.send(message)
-			print("messaggio mandato")
-			self.app.context["peers_addr"] = list()
-			self.app.context["downloads_available"] = dict()
+				peers = self.app.db.getAllPeers()
+				print("about to send connection")
 
-			message_type = self.connection_socket.recv(4)
-			num = int(self.connection_socket.recv(3))
+				temp = searchString
+				if len(temp) < 20:
+					while len(temp) < 20:
+						temp = temp + " "
+				elif len(temp) > 20:
+					temp = temp[0:20]
 
-			print("messaggio ricevuto")
-			if num != 0:
-				print("abbiamo dei file")
-				print("NUM " + str(num))
-				i = 0
-				for f in range(num):
-					print("stampiamo file")
-					print("INSIDE FOR "+ str(i))
-					file_md5 = self.connection_socket.recv(16)
-					nome = self.connection_socket.recv(100)
-					copie = int(self.connection_socket.recv(3))
-					s = str(nome) + "\t #copie" + str(copie)
-					print(str(file_md5) + " - " + str(nome) + " - " + str(copie) )
-					self.interface.log(s + " " + str(file_md5))
-					self.app.context["peers_addr"].append(s)
-					i += 1
-					for c in range(copie):
-						print("stampiamo i peer")
-						ip = self.connection_socket.recv(39)
-						port = int(self.connection_socket.recv(5))
-						print("peer " + str(ip) + " - " + str(port) )
-						self.interface.log("\t" + str(ip) + " " + str(port))
-						self.app.context["peers_addr"].append(str(ip))
-						key = str(i)+"_"+str(ip) 
-						self.app.context["downloads_available"][str(key)] = dict()
-						self.app.context["downloads_available"][str(key)]["porta"] = port
-						self.app.context["downloads_available"][str(key)]["nome"] = nome.strip(" ")
-						self.app.context["downloads_available"][str(key)]["md5"] = file_md5
-						self.app.context["downloads_available"][str(key)]["numcopie"] = copie
-						i += 1
+				if len(peers) !=0:
+					for i in range(len(peers)):
+						ip, port = peers[i]
 
-				self.isready = False
-				print("ALREADY SET self.isready " + str(self.isready))
-				self.interface.peerList.adapter.data = self.app.context["peers_addr"]
-				self.interface.peerList.populate()
+						self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+						self.connection_socket.connect((ip, int(port)))
+
+						ttl = "02"
+						message = "QUER"+packetID+""+self.ip_p2p+""+self.port+""+ttl+""+temp
+						self.connection_socket.send(message)
+						self.connection_socket.close()
+		except:
+			print("EXCEPTION IN SEARCH FILE")
+
+	def downloadFile(self, listadapter, *args):
+		try:
+			self.interface.log("ABOUT TO DOWNLOAD FROM " + listadapter.selection[0].text)
+			s = listadapter.selection[0].text
+			i = self.app.context["peers_addr"].index(s)
+			print("INSIDE DOWNLOAD ")
+			key = str(i)+"_"+str(s)
+			if(self.app.context["downloads_available"][str(key)]):
+				peer = self.app.context["downloads_available"][str(key)]
+				print(peer)
+				##possiamo far partire il download del file
+				destination = (s , int(peer["porta"]))
+				print(destination)
+				print(peer["md5"])
+				self.connection_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+				self.connection_socket.connect(destination)
+				message = "RETR"+str(peer["md5"])
+				self.connection_socket.send(message)
+				message_type = self.connection_socket.recv(4)
+				num_chunks = self.connection_socket.recv(6)
+				f = open('shared/'+peer["nome"].strip(" "), "wb")
+				if int(num_chunks) > 0 :
+					self.interface.progress.max = int(num_chunks)
+					for i in range(int(num_chunks)):
+						len_chunk = self.connection_socket.recv(5)
+						if (len_chunk > 0):
+							self.interface.progress.value = self.interface.progress.value + 1
+							chunk = self.connection_socket.recv(int(len_chunk))
+							f.write(chunk)
+					f.close()
+
 				self.connection_socket.close()
+				self.interface.progress.value = 0
 
 			else:
-				print("sono appena fallito")
-				self.interface.peerList.adapter.data = list()
-				self.interface.peerList.populate()
-				self.connection_socket.close()
-				self.interface.log("NON HO TROVATO NESSUN FILE." , "ERR")
-		else:
-			print("INSIDE SEARCH errore")
+				print("NOT AVAILABLE")
+		except:
+			print("exception!!")
+			print(sys.exc_info()[0])
+			print(sys.exc_info()[1])
+			print(sys.exc_info()[2])
+
 
 
 	def checkIPV6Format(self, address):

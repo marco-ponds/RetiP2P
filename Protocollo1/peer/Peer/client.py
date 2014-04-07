@@ -12,7 +12,7 @@ class PeerClient(object):
 	## storage ( key, value )
 
 
-	def set(self, app, ip_dir="none" , porta_dir="none"):
+	def set(self, app, ip_p2p, ip_dir="none" , porta_dir="none"):
 		print("inside peer set")
 		try:
 			self.app = app
@@ -21,16 +21,26 @@ class PeerClient(object):
 			##we should retrieve our ipv6 address and create a new port
 			##self.interface.log([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2]])
 			##self.ip_p2p = [ip for ip in socket.gethostbyname_ex(socket.gethostname())[2]][0]
-			short_ip = socket.getaddrinfo(socket.gethostname(),None, socket.AF_INET6)[0][4][0]
-			short_ip_a = short_ip.split(":")
-			ip = ""
-			for i in short_ip_a:
-				if len(i) == 0:
-					ip = ip + "0000:0000:0000:"
-				else:
-					ip = ip + i + ":"
+			if ip_p2p == None:
 
-			self.ip_p2p = ip
+				short_ip = socket.getaddrinfo(socket.gethostname(),None, socket.AF_INET6)[1][4][0]
+				short_ip_a = short_ip.split(":")
+				last = short_ip_a[-1]
+				ip = ""
+				for i in short_ip_a:
+					if len(i) == 0:
+						ip = ip + "0000:0000:0000:"
+					else:
+						if i == last:
+							ip = ip + i
+						else:
+							ip = ip + i + ":"
+						
+				self.ip_p2p = ip
+
+			else:
+				self.ip_p2p = ip_p2p
+
 			self.port = str(random.randint(8000,9000))
 			##we obtained a new port between 8000 and 9000
 			print(self.ip_p2p +":"+self.port)
