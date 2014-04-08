@@ -10,6 +10,8 @@
     console: console_log
     peerList: peer_list
     progress: progress_bar
+    nearAddr: address
+    nearPort: port
 
     GridLayout:
         rows: 3
@@ -21,9 +23,24 @@
             size_hint_y: 0.1
 
             TextInput:
+                id: address
+                hint_text: "IP"
+                size_hint_x: 1
+
+            TextInput:
+                id: port
+                hint_text: "PORT"
+                size_hint_x: 1
+
+            Button:
+                text: "ADD"
+                on_press: root.peer.addNear()
+                size_hint_x: .6
+
+            TextInput:
                 id: search_box
                 hint_text: "Esegui una ricerca"
-                size_hint_x: 3
+                size_hint_x: 2
 
             Button:
                 text: "cerca"

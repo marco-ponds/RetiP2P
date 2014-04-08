@@ -1,4 +1,4 @@
-from Cient.peer import PeerClient
+from Client.peer import PeerClient
 
 from Server.receiver import Receiver
 from Server.cerca import CercaVicini
@@ -61,6 +61,7 @@ class Controller(FloatLayout):
 
 		self.background.start()
 		self.receiver.start()
+		self.cercaVicini.start()
 
 	def log(self, message, messagetype="LOG"):
 

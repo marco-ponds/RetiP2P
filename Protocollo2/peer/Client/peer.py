@@ -4,7 +4,7 @@ import time
 import random
 import glob
 import string
-from random import *
+import random
 
 class PeerClient(object):
 
@@ -56,7 +56,7 @@ class PeerClient(object):
 			print("INSIDE SEARCH " + searchString)
 
 			chars = string.ascii_letters + string.digits
-			packetID = "".join(choice(chars) for x in range(randint(16, 16)))
+			packetID = "".join(choice(chars) for x in range(random.randint(16, 16)))
 			if not len(searchString) == 0:
 				# prima di una nuova ricerca azzero le liste precedenti
 				self.app.context["peers_addr"] = list()
@@ -86,6 +86,12 @@ class PeerClient(object):
 						self.connection_socket.close()
 		except:
 			print("EXCEPTION IN SEARCH FILE")
+
+	def addNear(self):
+		near_addr = self.app.nearAddr.text
+		near_port = self.app.nearPort.text
+		if near_addr != "" and near_port != "":
+			self.app.db.insertPeer(near_addr, near_port)
 
 	def downloadFile(self, listadapter, *args):
 		try:

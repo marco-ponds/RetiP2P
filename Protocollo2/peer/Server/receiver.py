@@ -97,7 +97,7 @@ class PacketHandler(threading.Thread):
 			port = self.socket.recv(5)
 			ttl = self.socket.recv(2)
 			ricerca = self.socket.recv(20)
-			#controllo se non ho già ricevuto il pacchetto
+			#controllo se non ho ricevuto il pacchetto
 			res = self.app.db.getPacchetto(packetID)
 			if len(res) == 0:
 				self.app.db.insertPacchetto(packetID, ip, port)
