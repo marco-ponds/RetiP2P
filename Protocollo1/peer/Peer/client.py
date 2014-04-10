@@ -253,12 +253,19 @@ class PeerClient(object):
 				num_chunks = self.connection_socket.recv(6)
 				f = open('shared/'+peer["nome"].strip(" "), "wb")
 				if int(num_chunks) > 0 :
+					print("num chunks " + str(num_chunks))
 					self.interface.progress.max = int(num_chunks)
 					for i in range(int(num_chunks)):
 						len_chunk = self.connection_socket.recv(5)
-						if (len_chunk > 0):
+						if (int(len_chunk) > 0):
 							self.interface.progress.value = self.interface.progress.value + 1
 							chunk = self.connection_socket.recv(int(len_chunk))
+							#f.write(chunk)
+							#print("downloading chunk " + str(len_chunk))
+							while len(chunk) < int(len_chunk):
+								new_data = self.connection_socket.recv(int(len_chunk)-len(chunk))
+								#f.write(new_data)
+								chunk = chunk + new_data
 							f.write(chunk)
 					f.close()
 
