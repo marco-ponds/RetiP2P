@@ -14,6 +14,9 @@ class CercaVicini (threading.Thread):
 		self.port = self.app.peer.port
 		self.canRun = True
 
+	def stop(self):
+		self.canRun = False
+
 	def run(self):
 		while self.canRun:
 			try:
@@ -34,5 +37,5 @@ class CercaVicini (threading.Thread):
 				print("something wrong, sorry ", "ERR")
 				print(sys.exc_info()[0], "ERR")
 				print(sys.exc_info()[1], "ERR")
-				print(sys.exc_info()[2], "ERR")
-				return
+				print(sys.exc_info()[2], "ERR")			
+		return

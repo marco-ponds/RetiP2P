@@ -63,6 +63,17 @@ class Controller(FloatLayout):
 		self.receiver.start()
 		self.cercaVicini.start()
 
+	def stop(self):
+		print("chiudo1")
+		self.background.stop()
+		print("chiudo2")
+		self.receiver.stop()
+		print("chiudo3")
+		self.cercaVicini.stop()
+		print("chiudo4")
+		self.db.stop()
+		print("chiudo5")
+
 	def log(self, message, messagetype="LOG"):
 
 		self.console.text = self.console.text + "\n" + str(message)
@@ -94,8 +105,16 @@ class Controller(FloatLayout):
 
 class ControllerApp(App):
 
+	def on_start(self):
+		print("sono partito")
+
+	def on_stop(self):
+		print("mi sono chiuso")
+		self.controller.stop()
+
 	def build(self):
-		return Controller()
+		self.controller = Controller()
+		return self.controller
 
 if __name__ == '__main__':
 	ControllerApp().run()

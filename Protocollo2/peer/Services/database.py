@@ -10,6 +10,9 @@ class DBControl(threading.Thread):
 		threading.Thread.__init__(self)
 		self.canRun = True
 
+	def stop(self):
+		self.canRun = False
+
 	def run(self):
 		while self.canRun:
 			if (os.path.isfile('database')):
@@ -41,7 +44,7 @@ class DBControl(threading.Thread):
 					print(sys.exc_info()[0], "ERR")
 					print(sys.exc_info()[1], "ERR")
 					print(sys.exc_info()[2], "ERR")
-					return
+		return
 
 class Database(object):
 
@@ -68,9 +71,14 @@ class Database(object):
 			return
 
 	def __init__(self):
-		if not(os.path.isfile('database')):
+
+		self.dbControl = DBControl()
+		self.dbControl.start()
+		if not os.path.isfile('database'):
 			self.initializeDatabase()
-    	DBControl().start()
+    	
+	def stop(self):
+		self.dbControl.stop()
 
 	def insertPeer(self, ip, port):
 		conn = sqlite3.connect('database')

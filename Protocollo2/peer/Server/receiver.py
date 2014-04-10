@@ -180,6 +180,7 @@ class Receiver(threading.Thread):
 		##self.interface.log("CLOSING THREAD", "LOG")
 		self.canRun = False
 		##trying to connect to my own port
+		print((self.address, self.port))
 		socket.socket(socket.AF_INET6, socket.SOCK_STREAM).connect((self.address, self.port))
 		self.socket.close()
 	
@@ -189,7 +190,7 @@ class Receiver(threading.Thread):
 			self.server_address = ( self.address , int(self.port))
 			self.socket.bind(self.server_address)
 			self.socket.listen(1)
-			while True:
+			while self.canRun:
 				try:
 					socketclient, address = self.socket.accept()
 					msg_type = socketclient.recv(4)
@@ -204,6 +205,7 @@ class Receiver(threading.Thread):
 				except:
 					##self.interface.log("exception inside our server","SUC")
 					return
+			return
 		except:
 			##self.interface.log("something wrong in our peer server. sorry","ERR")
 			return
