@@ -31,6 +31,11 @@ import time
 ## fd00:0000:0000:0000:9afe:94ff:fe3f:b0f2
 ## fd00:0000:0000:0000:b89a:58cf:3c32:10a6
 
+## michael fd00:0000:0000:0000:5626:96ff:fedb:a4ad
+## marco fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e
+## mahdi fd00:0000:0000:0000:ddb9:fc81:21d4:62c0
+
+
 class Controller(FloatLayout):
 
 	file_source = StringProperty(None)
@@ -47,7 +52,7 @@ class Controller(FloatLayout):
 		##creiamo il database
 		self.db = Database(self)
 
-		self.peer = PeerClient(self, None)  
+		self.peer = PeerClient(self, "")  
 
 		self.receiver = Receiver(self)
 		self.background = BackgroundService( self )
