@@ -5,11 +5,12 @@ import time
 
 class PeerToPeer(threading.Thread):
 
-	def __init__(self, filename, socket):
+	def __init__(self, filename, socket, app):
 
 		threading.Thread.__init__(self)
 		self.filename = filename
 		self.socket = socket
+		self.app = app
 
 	def run(self):
 		##filename = self.app.context["files_md5"][str(self.md5)]
@@ -51,13 +52,15 @@ class PeerToPeer(threading.Thread):
 
 class PacketHandler(threading.Thread):
 
-	def __init__ (self, socket, type):
+	def __init__ (self, socket, type, app):
 		threading.Thread.__init__(self)
 		self.socket = socket
 		self.type = type
+		self.app = app
 
-	def run():
+	def run(self):
 		if self.type == "NEAR":
+			self.app.log("NEAR receivecd")
 			##abbiamo ricevuto richiesta di vicini
 			packetID = self.socket.recv(16)
 			ip = self.socket.recv(39)
@@ -77,6 +80,7 @@ class PacketHandler(threading.Thread):
 						s.close()
 			self.socket.close()
 		if self.type == "ANEA":
+			self.app.log("ANEA received")
 			##ci stanno rispondendo con dei vicini
 			#recupero i miei vicini e controllo di averne meno di tre
 			peers = self.app.db.getAllPeers()
@@ -92,6 +96,7 @@ class PacketHandler(threading.Thread):
 			self.socket.close()
 
 		if self.type == "QUER":
+			self.app.log("QUER received")			
 			#abbiamo ricevuto un pacchetto di query
 			packetID = self.socket.recv(16)
 			ip =  self.socket.recv(39)
@@ -136,6 +141,7 @@ class PacketHandler(threading.Thread):
 
 			
 		if self.type == "AQUE":
+			self.app.log("AQUE received")
 			packetID = self.socket.recv(4)
 			ip = self.socket.recv(39)
 			port = self.socket.recv(5)
@@ -170,7 +176,7 @@ class Receiver(threading.Thread):
 		self.port = int(app.peer.port)
 
 		self.setDaemon(True)
-		print("PEER ADDRESS "+ self.address + ":" + str(self.port), "SUC")
+		self.app.log("PEER ADDRESS "+ self.address + ":" + str(self.port), "SUC")
 
 	def startServer ( self ):
 		##launching peer server
@@ -180,7 +186,7 @@ class Receiver(threading.Thread):
 		##self.interface.log("CLOSING THREAD", "LOG")
 		self.canRun = False
 		##trying to connect to my own port
-		print((self.address, self.port))
+		self.app.log((self.address, self.port))
 		socket.socket(socket.AF_INET6, socket.SOCK_STREAM).connect((self.address, self.port))
 		self.socket.close()
 	
@@ -195,17 +201,20 @@ class Receiver(threading.Thread):
 					socketclient, address = self.socket.accept()
 					msg_type = socketclient.recv(4)
 					if msg_type == "RETR":
+						self.app.log("RETR received")
 						md5 = socketclient.recv(16)
 						filename = self.app.context["files_md5"][str(md5)]
-						PeerToPeer(filename, socketclient).start()
+						PeerToPeer(filename, socketclient, self.app).start()
 					else:
-						PacketHandler(socketclient, msg_type).start()
+						PacketHandler(socketclient, msg_type, self.app).start()
 					
 						
 				except:
+					self.app.log("error in receiver run")
 					##self.interface.log("exception inside our server","SUC")
 					return
 			return
 		except:
+			self.app.log("error in creating socket for receiver")
 			##self.interface.log("something wrong in our peer server. sorry","ERR")
 			return

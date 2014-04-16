@@ -202,6 +202,7 @@ class Database(object):
 		cursor.close()
 
 	def getAllPeers(self):
+		self.app.log("retrieving all peers")
 		conn = sqlite3.connect("database")
 		cursor = conn.cursor()
 
