@@ -70,8 +70,9 @@ class Database(object):
 			print(sys.exc_info()[2], "ERR")
 			return
 
-	def __init__(self):
+	def __init__(self, app):
 
+		self.app = app
 		self.dbControl = DBControl()
 		self.dbControl.start()
 		if not os.path.isfile('database'):
