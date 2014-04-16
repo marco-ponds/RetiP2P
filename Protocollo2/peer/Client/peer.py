@@ -35,7 +35,7 @@ class PeerClient(object):
 				self.ip_p2p = ip_p2p
 			self.port = str(random.randint(8000,9000))
 			##we obtained a new port between 8000 and 9000
-			print(self.ip_p2p +":"+self.port)
+			self.app.log(self.ip_p2p +":"+self.port)
 			
 			##check if our addresses are in ipv6 format	
 			if not (self.checkIPV6Format(self.ip_p2p)):

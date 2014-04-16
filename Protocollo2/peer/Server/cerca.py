@@ -13,6 +13,7 @@ class CercaVicini (threading.Thread):
 		self.address = self.app.peer.ip_p2p
 		self.port = self.app.peer.port
 		self.canRun = True
+		self.numErr = 0
 
 	def stop(self):
 		self.canRun = False
@@ -34,7 +35,8 @@ class CercaVicini (threading.Thread):
 						s.close()
 				time.sleep(10)
 			except:
-				print("something wrong, sorry ", "ERR")
+				self.numErr += 1
+				print("CERCAVICINI ERRORE", "ERR")
 				print(sys.exc_info()[0], "ERR")
 				print(sys.exc_info()[1], "ERR")
 				print(sys.exc_info()[2], "ERR")			
