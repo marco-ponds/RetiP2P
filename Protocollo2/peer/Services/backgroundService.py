@@ -2,7 +2,6 @@ import threading
 import socket
 import glob
 import time
-from Tkinter import *
 
 class BackgroundService(threading.Thread):
 

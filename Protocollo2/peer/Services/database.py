@@ -50,7 +50,7 @@ class Database(object):
 
 	def initializeDatabase(self):
 		try:
-			print("about to initialize db")
+			self.app.log("about to initialize db")
 			conn = sqlite3.connect('database')
 			cursor = conn.cursor()
 
@@ -64,10 +64,10 @@ class Database(object):
 			conn.commit()
 			cursor.close()
 		except:
-			print("error in initialize db ", "ERR")
-			print(sys.exc_info()[0], "ERR")
-			print(sys.exc_info()[1], "ERR")
-			print(sys.exc_info()[2], "ERR")
+			self.app.log("error in initialize db ", "ERR")
+			self.app.log(sys.exc_info()[0], "ERR")
+			self.app.log(sys.exc_info()[1], "ERR")
+			self.app.log(sys.exc_info()[2], "ERR")
 			return
 
 	def __init__(self, app):
