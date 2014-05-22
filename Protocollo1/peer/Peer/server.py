@@ -81,7 +81,7 @@ class PeerServer(threading.Thread):
 			self.server_address = ( self.address , int(self.port))
 			self.socket.bind(self.server_address)
 			self.socket.listen(1)
-			while True:
+			while self.canRun:
 				print(".")
 				try:
 					socketclient, address = self.socket.accept()

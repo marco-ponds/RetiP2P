@@ -31,9 +31,6 @@ import time
 ## fd00:0000:0000:0000:9afe:94ff:fe3f:b0f2
 ## fd00:0000:0000:0000:b89a:58cf:3c32:10a6
 
-## fd00:0000:0000:0000:1e4b:d6ff:fecd:ba68
-## fd00:0000:0000:0000:021a:73ff:fed2:dbf5
-
 ## michael fd00:0000:0000:0000:5626:96ff:fedb:a4ad
 ## marco fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e
 ## mahdi fd00:0000:0000:0000:ddb9:fc81:21d4:62c0
@@ -57,7 +54,7 @@ class Controller(FloatLayout):
 
 		self.peer = PeerClient(self, 'fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e')#"fd00:0000:0000:0000:e6ce:8fff:fe0a:5e0e")  
 		self.peer.iamsuper = False
-
+		
 		self.receiver = Receiver(self)
 		self.background = BackgroundService( self )
 		self.cercaVicini = CercaVicini(self)

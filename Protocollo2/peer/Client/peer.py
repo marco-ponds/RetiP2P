@@ -36,6 +36,7 @@ class PeerClient(object):
 			self.port = str(random.randint(8000,9000))
 			##we obtained a new port between 8000 and 9000
 			self.app.log(self.ip_p2p +":"+self.port)
+			print(self.ip_p2p +":"+self.port)
 			
 			##check if our addresses are in ipv6 format	
 			if not (self.checkIPV6Format(self.ip_p2p)):
@@ -56,7 +57,7 @@ class PeerClient(object):
 			print("INSIDE SEARCH " + searchString)
 
 			chars = string.ascii_letters + string.digits
-			packetID = "".join(choice(chars) for x in range(random.randint(16, 16)))
+			packetID = "".join(random.choice(chars) for x in range(random.randint(16, 16)))
 			if not len(searchString) == 0:
 				# prima di una nuova ricerca azzero le liste precedenti
 				self.app.context["peers_addr"] = list()
@@ -81,11 +82,17 @@ class PeerClient(object):
 						self.connection_socket.connect((ip, int(port)))
 
 						ttl = "02"
-						message = "QUER"+packetID+""+self.ip_p2p+""+self.port+""+ttl+""+temp
+						port_message = ("0" * (5-len(str(self.port)))) + str(self.port)
+						message = "QUER"+packetID+""+self.ip_p2p+""+port_message+""+ttl+""+temp
+						self.app.log("SENDING " + message)
+						print("SENDING " + message)
 						self.connection_socket.send(message)
 						self.connection_socket.close()
 		except:
 			print("EXCEPTION IN SEARCH FILE")
+			print(sys.exc_info()[0], "ERR")
+			print(sys.exc_info()[1], "ERR")
+			print(sys.exc_info()[2], "ERR")
 
 	def addNear(self):
 		near_addr = self.app.nearAddr.text
@@ -95,7 +102,8 @@ class PeerClient(object):
 
 	def downloadFile(self, listadapter, *args):
 		try:
-			self.interface.log("ABOUT TO DOWNLOAD FROM " + listadapter.selection[0].text)
+			self.app.log("ABOUT TO DOWNLOAD FROM " + listadapter.selection[0].text)
+			print("ABOUT TO DOWNLOAD FROM " + listadapter.selection[0].text)
 			s = listadapter.selection[0].text
 			i = self.app.context["peers_addr"].index(s)
 			print("INSIDE DOWNLOAD ")
@@ -115,11 +123,11 @@ class PeerClient(object):
 				num_chunks = self.connection_socket.recv(6)
 				f = open('shared/'+peer["nome"].strip(" "), "wb")
 				if int(num_chunks) > 0 :
-					self.interface.progress.max = int(num_chunks)
+					self.app.progress.max = int(num_chunks)
 					for i in range(int(num_chunks)):
 						len_chunk = self.connection_socket.recv(5)
 						if (int(len_chunk) > 0):
-							self.interface.progress.value = self.interface.progress.value + 1
+							self.app.progress.value = self.app.progress.value + 1
 							chunk = self.connection_socket.recv(int(len_chunk))
 							#f.write(chunk)
 							#print("downloading chunk " + str(len_chunk))
@@ -131,7 +139,7 @@ class PeerClient(object):
 					f.close()
 
 				self.connection_socket.close()
-				self.interface.progress.value = 0
+				self.app.progress.value = 0
 
 			else:
 				print("NOT AVAILABLE")

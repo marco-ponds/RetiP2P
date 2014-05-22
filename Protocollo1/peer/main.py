@@ -26,6 +26,9 @@ import time
 ## fd00:0000:0000:0000:acdf:bd40:555a:59e4
 ## fd00:0000:0000:0000:9afe:94ff:fe3f:b0f2
 ## fd00:0000:0000:0000:b89a:58cf:3c32:10a6
+## fd00:0000:0000:0000:e51b:7f21:0581:d28d
+## fd00:0000:0000:0000:7df0:8e22:7cd7:d5b5
+## fd00:0000:0000:0000:0000:0000:0000:0010
 
 class Controller(FloatLayout):
 
@@ -41,7 +44,7 @@ class Controller(FloatLayout):
 		self.peerAdapter = la.ListAdapter(data=self.context['peers_addr'],selection_mode='single',allow_empty_selection=False,cls=lv.ListItemButton)
 
 		self.peer = PeerClient()  
-		self.peer.set(self, None, "fd00:0000:0000:0000:c864:f17c:bb5e:e4d1", "3000")
+		self.peer.set(self, "fd00:0000:0000:0000:0000:0000:0000:0039", "fd00:0000:0000:0000:0000:0000:0000:0010", "3000")
 		##self.peer.set(self, "fd00:0000:0000:0000:5626:96ff:fedb:a4ad","fd00:0000:0000:0000:b89a:58cf:3c32:10a6","3000")
 
 		self.peerServer = PeerServer(self)

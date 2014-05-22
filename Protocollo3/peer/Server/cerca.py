@@ -19,12 +19,13 @@ class CercaVicini (threading.Thread):
 		self.canRun = False
 
 	def run(self):
-		while self.canRun:
+
+		now = int(round(time.time()))
+		while (int(round(time.time())) - now) < 10:
 			try:
-				self.app.log("ABOUT TO SEND NEAR")
-				print("ABOUT TO SEND NEAR")
+				self.app.log("searching super")
 				peers = self.app.db.getAllPeers()
-				if len(peers) != 0 and len(peers) < 4:
+				if len(peers) != 0:
 					chars = string.ascii_letters + string.digits
 					packetID = "".join(random.choice(chars) for x in range(random.randint(16, 16)))
 					for i in range(len(peers)):
@@ -32,12 +33,10 @@ class CercaVicini (threading.Thread):
 						s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 						s.connect((ip, int(port)))
 						self.app.log("sending near to " + str((ip, int(port))))
-						print("sending near to " + str((ip, int(port))))
-						ttl = "02"
+						ttl = "04"
 						port_message = ("0" * (5-len(str(self.port)))) + str(self.port)
-						message = "NEAR" + packetID + self.address + port_message + ttl
+						message = "SUPE" + packetID + self.address + port_message + ttl
 						self.app.log("SENDING " + message)
-						print("SENDING " + message)
 						s.send(message)
 						s.close()
 				time.sleep(10)
@@ -46,5 +45,26 @@ class CercaVicini (threading.Thread):
 				self.app.log("CERCAVICINI ERRORE", "ERR")
 				print(sys.exc_info()[0], "ERR")
 				print(sys.exc_info()[1], "ERR")
-				print(sys.exc_info()[2], "ERR")			
+				print(sys.exc_info()[2], "ERR")
+
+		self.app.log("PASSATI 10 SECONDI. FINE RICERCA")	
+		self.app.peer.isSearching = False
+		#mi setto il superPeer a cui sono collegato
+		if self.app.peer.iamsuper:
+			self.app.log("ABOUT TO CHOOSE SUPER PEER")
+			l = int(len(self.app.peer.superList))
+			if l > 0:
+				index = random.randint(0, l)
+				self.app.peer.login(self.app.peer.superList[index])
+			self.app.log("I'm super peer")	
 		return
+
+
+
+
+
+
+
+
+
+
