@@ -14,10 +14,25 @@ if __name__ == "__main__":
 	try:
 		c.login()
 		while True:
-			print "MENU"
-			print "1. ricerca"
-			print "2. select file"
-			choice = raw_input("scegli cosa fare cazzo")
+			print "\n"
+			print "################################"
+			print "                               #"
+			print "      #####  #####  #####      #"
+			print "      #   #     ##  #   #      #"
+			print "      #####    ##   #####      #"
+			print "      #      ##     #          #"
+			print "      #     #####   #          #"
+			print "                               #"
+			print "                               #"
+			print "      MENU                     #"
+			print "      1. ricerca               #"
+			print "      2. select file           #"
+			print "      3. select file           #"
+			print "      4. logout                #"
+			print "                               #"
+			print "################################"
+			print "\n"
+			choice = raw_input("scegli: ")
 			if choice == "1":
 				to_search = raw_input("inserisci nome file: ")
 				c.search(search=to_search)

@@ -48,12 +48,14 @@ class Handler(object):
 			userfiles = list()
 			checkfiles = 0
 			numdown = 0
+			print "USERPARTS ", userParts
 			for k, val in userParts:
-				if (val['file'],k) not in userfiles:
-					print "val[file] ", val['file']
-					print str(self.db.Files[0])
-					f_data = self.db.Files[int(val['file'])]
-					userfiles.append((f_data['id'], k))
+				print "USERPARTS VALUES	", val['file'], k
+				if (val['file']) not in userfiles:
+					#print "val[file] ", val['file']
+					#print str(self.db.Files[0])
+					#f_data = self.db.Files[int(val['file'])]
+					userfiles.append(val['file'])
 			'''
 			for i in range(0, len(userfiles)):
 				f_name, f_id = userfiles[i]
@@ -109,8 +111,35 @@ class Handler(object):
 						final_parts = final_parts[0:fparts]
 						print "BLIST", final_parts
 			'''
-			for k, val in userParts:
-				val['file']
+			tot = 0
+			numdown = 0
+			for fid in userfiles:
+				##vado a recuperare quante parti ci sono in giro per ogni file che ho aggiunto
+				##se per ogni file il numero delle parti in giro è uguale ad un multiplo del numero delle parti
+				##allora il file è stato già scaricato
+				print "MY FILE: " , fid, len(userfiles)
+				f_data = self.db.Files[int(fid)]
+				ratio = int(f_data['size'])%int(f_data['psize'])
+				val = int(self.db.Files[int(fid)]['size'])/int(self.db.Files[int(fid)]['psize'])
+				val_sup = val + 1
+				my_parts = val if not ratio else val_sup
+				file_parts = self.db.Parts.find_by(file=fid)
+				if not len(file_parts)%my_parts:
+					#vuol dire che abbiamo un multiplo perfetto
+					if len(file_parts)/my_parts > 1:
+						numdown += len(self.db.Parts.find_by(file=fid))
+						tot += 1
+						
+				if tot == len(userfiles):
+					print "tutti i tuoi file sonos stati scaricati, bye!"
+					#i file dell'utente sono di dominio pubblico
+					rowid = self.db.Sessions.find_by(id=sid)[0][0]
+					self.db.Sessions.delete(rowid)
+					len_parts = str(len(userParts)).zfill(10)
+					return "ALOG"+len_parts
+				else:
+					ret_num_down = str(numdown).zfill(10)
+					return "NLOG"+ret_num_down					
 		except:
 			print traceback.print_exc()
 			print("exception in logout")
