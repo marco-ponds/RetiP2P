@@ -21,7 +21,7 @@ class CercaVicini (threading.Thread):
 	def run(self):
 
 		now = int(round(time.time()))
-		while (int(round(time.time())) - now) < 10:
+		while (int(round(time.time())) - now) < 30:
 			try:
 				self.app.log("searching super")
 				peers = self.app.db.getAllPeers()
@@ -39,7 +39,7 @@ class CercaVicini (threading.Thread):
 						self.app.log("SENDING " + message)
 						s.send(message)
 						s.close()
-				time.sleep(10)
+				#time.sleep(10)
 			except:
 				self.numErr += 1
 				self.app.log("CERCAVICINI ERRORE", "ERR")
@@ -50,9 +50,10 @@ class CercaVicini (threading.Thread):
 		self.app.log("PASSATI 10 SECONDI. FINE RICERCA")	
 		self.app.peer.isSearching = False
 		#mi setto il superPeer a cui sono collegato
-		if self.app.peer.iamsuper:
+		if not self.app.peer.iamsuper:
 			self.app.log("ABOUT TO CHOOSE SUPER PEER")
 			l = int(len(self.app.peer.superList))
+			print self.app.peer.superList, l
 			if l > 0:
 				index = random.randint(0, l)
 				self.app.peer.login(self.app.peer.superList[index])

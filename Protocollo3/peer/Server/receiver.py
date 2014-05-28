@@ -162,8 +162,8 @@ class PacketHandler(threading.Thread):
 						else:
 							#sono un super peer e posso rispondere
 							s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-							s.connect(ip, int(port))
-							port_message = ("0" * (5- int(len(str(self.port))))) + self.port
+							s.connect((ip, int(port)))
+							port_message = ("0" * (5- int(len(str(self.port))))) + str(self.port)
 							message = "ASUP" + packetID + self.address + port_message
 							s.send(message)
 							s.close()

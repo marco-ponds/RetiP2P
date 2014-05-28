@@ -17,6 +17,7 @@ class PeerClient(object):
 			self.superList = list()
 			self.isSearching = True
 			self.iamsuper = False
+			self.directory = None
 
 			if ip_p2p == None:
 
@@ -60,7 +61,7 @@ class PeerClient(object):
 
 	def login(self, directory):
 		try:
-			if self.directory and not self.iamsuper:
+			if not self.iamsuper:
 				s = socket.socket(socket.AF_INET6 , socket.SOCK_STREAM)
 				self.directory = directory
 				s.connect(directory)
@@ -70,12 +71,12 @@ class PeerClient(object):
 				print("about to send login message " + message)
 				self.app.log(message)
 				s.send(message)
-				message_type = self.connection_socket.recv(4)
-				session_id = self.connection_socket.recv(16)
+				message_type = s.recv(4)
+				session_id = s.recv(16)
 				self.app.log("TYPE " + message_type)
 				self.app.log("SESSION ID "+session_id)
 				self.app.receivedLogin( session_id )
-				self.connection_socket.close()
+				s.close()
 
 				##adding all files
 				files = glob.glob("shared/*.*")

@@ -4,6 +4,7 @@ import os.path
 import threading
 import sys
 import string
+import traceback
 from string import *
 
 class DBControl(threading.Thread):
@@ -96,10 +97,10 @@ class Database(object):
 
 	def insertClient(self, ip, port):
 		try:
-			print("about to insert client " + (ip, str(port)))
+			print "about to insert new client", ip, str(port)
 			conn = sqlite3.connect("database")
 			cursor = conn.cursor()
-			select = "SELECT FROM clienti WHERE ip='"+ip+"' AND port='"+str(port)+"'"
+			select = "SELECT * FROM client WHERE ip='"+ip+"' AND port='"+str(port)+"'"
 			cursor.execute(select)
 			results = cursor.fetchall()
 			if len(results) > 0:
@@ -114,9 +115,7 @@ class Database(object):
 				return sessionId
 		except:
 			print("EXCEPTION inserting new client, returning error code")
-			print(sys.exc_info()[0])
-			print(sys.exc_info()[1])
-			print(sys.exc_info()[2])
+			traceback.print_exc()
 			return "0000000000000000"
 
 	def removeClient(self, sessionId):
@@ -125,7 +124,7 @@ class Database(object):
 			#prima controllo di averlo nel database
 			conn = sqlite3.connect('database')
 			cursor = conn.cursor()
-			select = "SELECT FROM client WHERE sessionId='"+str(sessionId)+"'"
+			select = "SELECT * FROM client WHERE sessionId='"+str(sessionId)+"'"
 			cursor.execute(select)
 			results = cursor.fetchall()
 			if not len(results) == 0:
@@ -146,7 +145,7 @@ class Database(object):
 			print("about to retrieve client with sessionid " + sessionId)
 			conn = sqlite3.connect("database")
 			cursor = conn.cursor()
-			select = "SELECT FROM client WHERE sessionId='"+str(sessionId)+"'"
+			select = "SELECT * FROM client WHERE sessionId='"+str(sessionId)+"'"
 			cursor.execute(select)
 			results = cursor.fetchall()
 			ip, port, id = results[0]
