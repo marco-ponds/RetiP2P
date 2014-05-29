@@ -23,7 +23,6 @@ class CercaVicini (threading.Thread):
 		now = int(round(time.time()))
 		while (int(round(time.time())) - now) < 30:
 			try:
-				self.app.log("searching super")
 				peers = self.app.db.getAllPeers()
 				if len(peers) != 0:
 					chars = string.ascii_letters + string.digits
@@ -32,32 +31,31 @@ class CercaVicini (threading.Thread):
 						ip , port = peers[i]
 						s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 						s.connect((ip, int(port)))
-						self.app.log("sending near to " + str((ip, int(port))))
+						print("sending near to " + str((ip, int(port))))
 						ttl = "04"
 						port_message = ("0" * (5-len(str(self.port)))) + str(self.port)
 						message = "SUPE" + packetID + self.address + port_message + ttl
-						self.app.log("SENDING " + message)
+						print("SENDING " + message)
 						s.send(message)
 						s.close()
-				#time.sleep(10)
+				time.sleep(10)
 			except:
 				self.numErr += 1
-				self.app.log("CERCAVICINI ERRORE", "ERR")
+				print("CERCAVICINI ERRORE", "ERR")
 				print(sys.exc_info()[0], "ERR")
 				print(sys.exc_info()[1], "ERR")
 				print(sys.exc_info()[2], "ERR")
 
-		self.app.log("PASSATI 10 SECONDI. FINE RICERCA")	
+		print("PASSATI 10 SECONDI. FINE RICERCA")	
 		self.app.peer.isSearching = False
 		#mi setto il superPeer a cui sono collegato
 		if not self.app.peer.iamsuper:
-			self.app.log("ABOUT TO CHOOSE SUPER PEER")
+			print("ABOUT TO CHOOSE SUPER PEER")
 			l = int(len(self.app.peer.superList))
 			print self.app.peer.superList, l
 			if l > 0:
-				index = random.randint(0, l)
+				index = random.randint(0, l-1)
 				self.app.peer.login(self.app.peer.superList[index])
-			self.app.log("I'm super peer")	
 		return
 
 

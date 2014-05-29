@@ -44,8 +44,8 @@ class PeerClient(object):
 			else:
 				self.port = str(random.randint(40000, 60000))
 			##we obtained a new port between 8000 and 9000
-			self.app.log(self.ip_p2p +":"+self.port)
-			print("MYADDRESS" + self.ip_p2p +":"+self.port)
+			print(self.ip_p2p +":"+self.port)
+			#print("MYADDRESS" + self.ip_p2p +":"+self.port)
 
 			
 			##check if our addresses are in ipv6 format	
@@ -71,12 +71,12 @@ class PeerClient(object):
 				port_message = ("0" * (5 - len(str(self.port)))) + self.port
 				message = "LOGI"+str(self.ip_p2p) + port_message
 				print("about to send login message " + message)
-				self.app.log(message)
+				print(message)
 				s.send(message)
 				message_type = s.recv(4)
 				session_id = s.recv(16)
-				self.app.log("TYPE " + message_type)
-				self.app.log("SESSION ID "+session_id)
+				print("TYPE " + message_type)
+				print("SESSION ID "+session_id)
 				self.app.receivedLogin( session_id )
 				s.close()
 
@@ -104,7 +104,7 @@ class PeerClient(object):
 			if not self.iamsuper:
 				if self.app.context["sessionid"]:
 					print("about to add a new file " + filename + " - " + md5)
-					self.app.log("about to add new file " + filename + " - " + md5)
+					print("about to add new file " + filename + " - " + md5)
 					s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 					s.connect(self.directory)
 					##aggiungiamo un file
@@ -112,17 +112,17 @@ class PeerClient(object):
 					
 					message = "ADDF"+self.app.context["sessionid"]+md5+temp
 					print("about to send addfile message: " + message)
-					self.app.log(str(message))
+					print(str(message))
 					s.send(message)
 	
 					message_type = s.recv(4)
 					copy_numbers = s.recv(3)
 	
 					print("received " + message_type + " - num files " + copy_numbers)
-					self.app.log("RECEIVED " + message_type)
-					self.app.log("NUMBER OF COPIES: " + copy_numbers)
+					print("RECEIVED " + message_type)
+					print("NUMBER OF COPIES: " + copy_numbers)
 				else:
-					self.app.log("non hai ancora un sessionid")
+					print("non hai ancora un sessionid")
 			else:
 				print("i'm super, i can't add files.")
 		except:
@@ -144,8 +144,8 @@ class PeerClient(object):
 					message_type = s.recv(4)
 					copy_numbers = s.recv(3)
 					print("RECEIVED message " + message_type + " - numero copie rimosse " + copy_numbers) 
-					self.app.log("RECEIVED " + message_type)
-					self.app.log("NUMBER OF COPIES: " + copy_numbers)
+					print("RECEIVED " + message_type)
+					print("NUMBER OF COPIES: " + copy_numbers)
 			else:
 				print("I'm super, i can't remove files")
 		except:
@@ -153,10 +153,10 @@ class PeerClient(object):
 			traceback.print_exc()
 
 
-	def searchFile(self):
+	def searchFile(self, text):
 		try:
 			if not self.iamsuper:
-				searchString = self.app.searchBox.text ##.get("1.0", END)[0:-1]
+				searchString = text.zfill(20)[0:20] ##.get("1.0", END)[0:-1]
 				print("INSIDE SEARCH " + searchString)
 	
 				chars = string.ascii_letters + string.digits
@@ -188,7 +188,7 @@ class PeerClient(object):
 							ttl = "02"
 							port_message = ("0" * (5-len(str(self.port)))) + str(self.port)
 							message = "QUER"+packetID+""+self.ip_p2p+""+port_message+""+ttl+""+temp
-							self.app.log("SENDING " + message)
+							print("SENDING " + message)
 							self.connection_socket.send(message)
 							self.connection_socket.close()
 					'''
@@ -197,9 +197,10 @@ class PeerClient(object):
 					s.connect(self.directory)
 					ttl = "02"
 					port_message = ("0" * (5-len(str(self.port)))) + str(self.port)
-					message = "QUER"+packetID+""+self.ip_p2p+""+port_message+""+ttl+""+temp
+					#message = "FIND"+packetID+""+self.ip_p2p+""+port_message+""+ttl+""+temp
+					message = "FIND" + self.app.context['sessionid'] + searchString
 					print("sending query message: " + message)
-					self.app.log("SENDING " + message)
+					print("SENDING " + message)
 					s.send(message)
 					s.close()
 			else:
@@ -208,16 +209,16 @@ class PeerClient(object):
 			print("EXCEPTION IN SEARCH FILE")
 			traceback.print_exc()
 
-	def addNear(self):
-		near_addr = self.app.nearAddr.text
-		near_port = self.app.nearPort.text
+	def addNear(self, text, port):
+		near_addr = text
+		near_port = port
 		if near_addr != "" and near_port != "":
 			self.app.db.insertPeer(near_addr, near_port)
 
-	def downloadFile(self, listadapter, *args):
+	def downloadFile(self, text):
 		try:
-			self.app.log("ABOUT TO DOWNLOAD FROM " + listadapter.selection[0].text)
-			s = listadapter.selection[0].text
+			print("ABOUT TO DOWNLOAD FROM " + text)
+			s = text
 			i = self.app.context["peers_addr"].index(s)
 			print("INSIDE DOWNLOAD ")
 			key = str(i)+"_"+str(s)

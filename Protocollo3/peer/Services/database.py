@@ -5,6 +5,7 @@ import threading
 import sys
 import string
 import traceback
+import random
 from string import *
 
 class DBControl(threading.Thread):
@@ -53,7 +54,7 @@ class Database(object):
 
 	def initializeDatabase(self):
 		try:
-			self.app.log("about to initialize db")
+			print("about to initialize db")
 			conn = sqlite3.connect('database')
 			cursor = conn.cursor()
 
@@ -74,10 +75,10 @@ class Database(object):
 			conn.commit()
 			cursor.close()
 		except:
-			self.app.log("error in initialize db ", "ERR")
-			self.app.log(sys.exc_info()[0], "ERR")
-			self.app.log(sys.exc_info()[1], "ERR")
-			self.app.log(sys.exc_info()[2], "ERR")
+			print("error in initialize db ", "ERR")
+			print(sys.exc_info()[0], "ERR")
+			print(sys.exc_info()[1], "ERR")
+			print(sys.exc_info()[2], "ERR")
 			return
 
 	def __init__(self, app):
@@ -93,7 +94,7 @@ class Database(object):
 
 	def random_sessionID(self):
 		chars = string.ascii_letters + string.digits
-		return "".join(choice(chars) for x in range(randint(16, 16)))
+		return "".join(random.choice(chars) for x in range(random.randint(16, 16)))
 
 	def insertClient(self, ip, port):
 		try:
@@ -105,14 +106,18 @@ class Database(object):
 			results = cursor.fetchall()
 			if len(results) > 0:
 				#abbiamo gia inserito questo client, ritorno il codice di errore
+				conn.commit()
+				cursor.close()
 				return "0000000000000000"
 			else:
 				#utente mai inserito, creiamo un nuovo sessionid, e inseriamo nel db
-				sessionId = random_sessionID()
+				sessionid = self.random_sessionID()
 				insert = "INSERT INTO client VALUES(?, ?, ?)"
 				values = (ip, int(port), sessionid)
 				cursor.execute(insert,values)
-				return sessionId
+				conn.commit()
+				cursor.close()
+				return sessionid
 		except:
 			print("EXCEPTION inserting new client, returning error code")
 			traceback.print_exc()
@@ -143,6 +148,7 @@ class Database(object):
 	def getClient(self, sessionId):
 		try:
 			print("about to retrieve client with sessionid " + sessionId)
+			print "client select all results ", self.getAllClients()
 			conn = sqlite3.connect("database")
 			cursor = conn.cursor()
 			select = "SELECT * FROM client WHERE sessionId='"+str(sessionId)+"'"
@@ -158,6 +164,26 @@ class Database(object):
 			print(sys.exc_info()[1])
 			print(sys.exc_info()[2])
 			return (None, None, None)
+
+	def getAllClients(self):
+		try:
+			print "about to retrieve all clients"
+			conn = sqlite3.connect("database")
+			cursor = conn.cursor()
+			select = "SELECT * FROM client"
+			cursor.execute(select)
+			results = cursor.fetchall()
+			conn.commit()
+			cursor.close()
+			print "inside get all clients, about to return all clients"
+			return results
+		except:
+			print("EXCEPTION trying to retrieve all clients")
+			print(sys.exc_info()[0])
+			print(sys.exc_info()[1])
+			print(sys.exc_info()[2])
+			return []
+
 
 	def insertDirFile(self, sessionId, md5, file):
 		try:
@@ -177,6 +203,9 @@ class Database(object):
 				conn.commit()
 				cursor.close()
 				print("add new file completed successfully")
+			else:
+				conn.commit()
+				cursor.close()
 
 		except:
 			print("EXCEPTION in add new file")
@@ -201,6 +230,9 @@ class Database(object):
 				conn.commit()
 				cursor.close()
 				print("remove file completed successfully")
+			else:
+				conn.commit()
+				cursor.close()
 
 		except:
 			print("EXCEPTION in remove file")
@@ -225,7 +257,13 @@ class Database(object):
 				delete = "DELETE FROM dir_files WHERE sessionId='"+sessionId+"'"
 				cursor.execute(delete)
 				print("returning number of removed files")
+				conn.commit()
+				cursor.close()
 				return len(results)
+			else:
+				conn.commit()
+				cursor.close()
+				return 0
 		except:
 			print("EXCEPTION in remove all client files")
 			print(sys.exc_info()[0])
@@ -354,7 +392,6 @@ class Database(object):
 		cursor.close()
 
 	def getAllPeers(self):
-		self.app.log("retrieving all peers")
 		conn = sqlite3.connect("database")
 		cursor = conn.cursor()
 
